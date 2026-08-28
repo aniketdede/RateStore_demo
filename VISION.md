@@ -1,6 +1,5 @@
-# VISION.md — RateStore (What Comes After Assessment)
+# VISION.md — RateStore 
 
-This is NOT in the graded brief. It is the product vision documented in `for business.txt` Building these would sink the 35h budget; they are for interview discussion only.
 
 ## GOVERNMENT COMPLIANCE & MANDATORY REGISTRATION
 Partner with food-safety authorities for mandatory hotel/restaurant registration. Real-time data for government: which establishments follow policy, low ratings trigger inspection/raid. Government earns from registration fees and data access.
