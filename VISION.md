@@ -20,5 +20,3 @@ Only registered customers (verified via QR / in-person visit / government ID lin
 - Add notifications, mobile app, analytics dashboard for government.
 - Multi-region deployment (Neon branches per region, Vercel Edge, Render regions).
 
-## WHY THIS IS NOT IN CODE
-The assessment explicitly tests schema quality, server-side filtering, validation discipline, and role guards — not coupon loops or government APIs. The correct signal: document the vision clearly, then separate it from the shipped code.
