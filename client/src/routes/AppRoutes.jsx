@@ -13,9 +13,20 @@ import AdminAddStore from '../pages/admin/AdminAddStore';
 function RoleRouter() {
   const { user, token } = useAuth();
   if (!token || !user) return <Navigate to="/login" replace />;
-  if (user.role === 'ADMIN') return <Layout role="ADMIN"><div style={{padding:'var(--space-5)'}}><h2>Admin Dashboard</h2><p>Use sidebar navigation — Data from /api/admin/dashboard, /api/users, /api/stores</p></div></Layout>;
-  if (user.role === 'OWNER') return <Layout role="OWNER"><div style={{padding:'var(--space-5)'}}><h2>Store Owner Dashboard</h2><p>Average rating + raters list via /api/ratings/&#123;storeId&#125;</p></div></Layout>;
+  if (user.role === 'ADMIN') return <Layout role="ADMIN"><AdminDashboard /></Layout>;
+  if (user.role === 'OWNER') return <Layout role="OWNER"><OwnerDashboard /></Layout>;
   return <Layout role="USER"><StoresPage /></Layout>;
+}
+
+function ProtectedRoute({ children, allowedRoles }) {
+  const { user, token } = useAuth();
+  if (!token || !user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
+    if (user.role === 'OWNER') return <Navigate to="/owner" replace />;
+    return <Navigate to="/" replace />;
+  }
+  return children;
 }
 
 export default function AppRoutes() {
@@ -26,10 +37,38 @@ export default function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<RoleRouter />} />
-          <Route path="/owner" element={<Layout role="OWNER"><OwnerDashboard /></Layout>} />
-          <Route path="/admin/dashboard" element={<Layout role="ADMIN"><AdminDashboard /></Layout>} />
-          <Route path="/admin/add-user" element={<Layout role="ADMIN"><AdminAddUser /></Layout>} />
-          <Route path="/admin/add-store" element={<Layout role="ADMIN"><AdminAddStore /></Layout>} />
+          <Route
+            path="/owner"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}>
+                <Layout role="OWNER"><OwnerDashboard /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Layout role="ADMIN"><AdminDashboard /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/add-user"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Layout role="ADMIN"><AdminAddUser /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/add-store"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Layout role="ADMIN"><AdminAddStore /></Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

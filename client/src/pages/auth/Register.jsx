@@ -1,29 +1,37 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../components/context/AuthContext';
 
 export default function Register() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [ok, setOk] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       const res = await fetch('http://localhost:4000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name, email, address, password, role: 'USER' }),
+        body: JSON.stringify({ name, email, address, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');
-      setOk(true);
-      localStorage.setItem('ratestore_token', data.token);
-      window.location.href = '/';
-    } catch (err) { setError(err.message); }
+      login(data.token, data.user);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,7 +48,10 @@ export default function Register() {
         <input id="reg-addr" required maxLength={400} value={address} onChange={e => setAddress(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-input)', fontSize: 14, marginBottom: 'var(--space-4)' }} />
         <label htmlFor="reg-pw" style={{ display: 'block', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-meta)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>Password (8–16, uppercase + special)</label>
         <input id="reg-pw" type="password" required minLength={8} maxLength={16} value={password} onChange={e => setPassword(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-input)', fontSize: 14, marginBottom: 'var(--space-4)' }} />
-        <button type="submit" disabled={ok} style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-teal)', color: '#fff', fontWeight: 600, fontSize: 15, cursor: 'pointer', boxShadow: 'var(--shadow-card)' }}>{ok ? 'Account created' : 'Create account'}</button>
+        <button type="submit" disabled={loading} style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-teal)', color: '#fff', fontWeight: 600, fontSize: 15, cursor: 'pointer', boxShadow: 'var(--shadow-card)' }}>{loading ? 'Creating account…' : 'Create account'}</button>
+        <p style={{ marginTop: 'var(--space-4)', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
+          Already have an account? <Link to="/login" style={{ color: 'var(--accent-teal)', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+        </p>
       </form>
     </div>
   );
