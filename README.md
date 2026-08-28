@@ -1,6 +1,6 @@
 # RateStore — Store Rating Platform
 
-**Assessment build:** Express (JS) + PostgreSQL (Neon) + Prisma + React (Vite). 35h budget, docs-first.
+**Assessment build:** Express (JS) + PostgreSQL (Neon) + Prisma + React (Vite).  docs-first.
 
 **Live URL:** API running on Render (planned) / currently verified on `http://localhost:4000` against live Neon DB (`ep-round-shadow-a5nmvo7s-pooler.us-east-2.aws.neon.tech`).
 
