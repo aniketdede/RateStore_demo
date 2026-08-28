@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(60)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @db.Text @map("password_hash")
+  address      String    @db.VarChar(400)
+  role         Role      @default(USER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Stores owned by this user (one or many; brief implies one per owner at this scale)
+  ownedStores  Store[]   @relation("StoreOwner")
+
+  // Ratings submitted by this user
+  ratings      Rating[]
+
+  @@map("users")
+  @@index([email])
+  @@index([role])
+  @@index([name])
+}
+
+model Store {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(60)
+  email       String    @unique @db.VarChar(255)
+  address     String    @db.VarChar(400)
+  ownerId     String?   @db.Uuid @map("owner_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  owner       User?     @relation("StoreOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ratings     Rating[]
+
+  @@map("stores")
+  @@index([name])
+  @@index([email])
+  @@index([address])
+  @@index([ownerId])
+}
+
+model Rating {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  storeId   String   @db.Uuid @map("store_id")
+  value     Int      // 1 to 5; validated at app + DB level
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("ratings")
+  @@unique([userId, storeId])  // one rating per user per store (upsert)
+  @@index([storeId])         // aggregate query support
+  @@index([userId])
+  @@index([storeId, value])
+}
+
+enum Role {
+  ADMIN
+  USER
+  OWNER
+}

@@ -1,0 +1,15 @@
+node_modules/
+.vscode/
+.env
+.neon
+.neonrc
+.env.local
+*.log
+build/
+dist/
+*.sqlite
+*.sqlite3
+.prisma/client/
+coverage/
+RateStore_bundle.git
+uploads/
