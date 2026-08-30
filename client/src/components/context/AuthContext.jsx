@@ -1,36 +1,57 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { setAuthToken, getToken } from '../../api/client';
 
 const AuthContext = createContext(null);
+const USER_KEY = 'ratestore_user';
+const TOKEN_KEY = 'ratestore_token';
+
+function readStoredUser(token) {
+  try {
+    const savedUser = localStorage.getItem(USER_KEY);
+    if (savedUser) return JSON.parse(savedUser);
+  } catch { /* noop */ }
+  try {
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return { id: payload.id, name: payload.name, email: payload.email, role: payload.role };
+    }
+  } catch { /* noop */ }
+  return null;
+}
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('ratestore_token') || null);
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('ratestore_user');
-    if (savedUser) {
-      try { return JSON.parse(savedUser); } catch {}
-    }
-    const savedToken = localStorage.getItem('ratestore_token');
-    if (savedToken) {
-      try {
-        const payload = JSON.parse(atob(savedToken.split('.')[1]));
-        return { id: payload.id, name: payload.name, email: payload.email, role: payload.role };
-      } catch {}
-    }
-    return null;
+  const [token, setToken] = useState(() => {
+    const t = getToken();
+    if (t) setAuthToken(t);
+    return t;
   });
+  const [user, setUser] = useState(() => readStoredUser(getToken()));
+
+  // When the API says the session is invalid, clear in-app state; route guards then
+  // redirect to /login smoothly (no hard reload / navigation race).
+  useEffect(() => {
+    const onUnauthorized = () => {
+      setAuthToken(null);
+      try { localStorage.removeItem(USER_KEY); } catch { /* noop */ }
+      setToken(null);
+      setUser(null);
+    };
+    window.addEventListener('auth:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
+  }, []);
 
   const login = (newToken, userData) => {
-    localStorage.setItem('ratestore_token', newToken);
+    setAuthToken(newToken); // sync in-memory + localStorage
     if (userData) {
-      localStorage.setItem('ratestore_user', JSON.stringify(userData));
+      try { localStorage.setItem(USER_KEY, JSON.stringify(userData)); } catch { /* noop */ }
     }
     setToken(newToken);
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('ratestore_token');
-    localStorage.removeItem('ratestore_user');
+    setAuthToken(null); // clears in-memory + localStorage token
+    try { localStorage.removeItem(USER_KEY); } catch { /* noop */ }
     setToken(null);
     setUser(null);
   };

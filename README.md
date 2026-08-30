@@ -22,9 +22,9 @@
 git clone https://github.com/aniketdede/RateStore_demo.git
 cd RateStore_demo
 
-# 1. DB config (already live on Neon for this project — copy URL into server/.env)
-cp server/.env.example server/.env
-# Edit DATABASE_URL to your Neon connection string
+# 1. DB config — the env template lives at the repo root, but the server reads server/.env
+cp .env.example server/.env
+# Edit DATABASE_URL to your Neon (or local Postgres) connection string, and set JWT_SECRET
 
 # 2. Install & generate
 cd server && npm install && npx prisma generate
@@ -39,6 +39,19 @@ npm run dev         # http://localhost:4000
 # 5. Client (separate terminal)
 cd ../client && npm install && npm run dev   # http://localhost:5173
 ```
+
+> **Frontend↔API wiring:** the client uses a central API helper (`client/src/api/client.js`).
+> In local dev, leave `VITE_API_URL` **unset** — Vite proxies relative `/api/*` calls to
+> `http://localhost:4000` (see `client/vite.config.js`). In production set
+> `VITE_API_URL` to your deployed API URL (`cp client/.env.example client/.env`).
+
+### What works end-to-end
+- **Users:** browse/search stores (by name, email, address), see overall rating, and **submit/modify a 1–5 star rating** (modal, upsert), with a "Your rating" badge.
+- **Store owners:** dashboard auto-loads **their own store** via `GET /api/stores/my` (no hardcoded IDs), showing average rating and the full rater list.
+- **Admins:** dashboard stats; users & stores tables with **server-side filters, clickable column sorting (asc/desc), and pagination**; user list shows address and each owner's store rating; add-store uses an **owner dropdown**; add-user role selector.
+- **All roles:** **Change password** modal (sidebar) calling `POST /api/auth/password`.
+- Validation errors (e.g. "Name must be at least 20 characters") are surfaced in the UI instead of a generic message.
+- Server sorting is **whitelisted** (sorting by computed `averageRating` is done in SQL; unknown columns are ignored rather than crashing).
 
 ---
 
@@ -114,7 +127,12 @@ cd ../client && npm install && npm run dev   # http://localhost:5173
 - [x] README with setup + seed credentials + deploy steps
 - [x] VISION.md (business extension, not in code)
 - [x] Soft UI design applied (`design.md`, `design-system.css`, accessibility checklist)
-- [ ] Line-by-line brief audit (walk every bullet against running app — do last)
+- [x] Rating submission/modification UI (star modal) wired to `POST /api/ratings/:storeId`
+- [x] Owner dashboard resolves the logged-in owner's store dynamically (`/api/stores/my`)
+- [x] Change-password UI for all roles
+- [x] Admin filters / clickable sorting / pagination UI; owner dropdown on add-store; owner store rating in user list
+- [x] Whitelisted server-side sorting (no 500 on `sortBy=averageRating`); env-driven API URL + Vite proxy
+- [x] Line-by-line brief audit (walk every bullet against running app — do last)
 
 ---
 
