@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../components/context/AuthContext';
+import api from '../../api/client';
 
 export default function Login() {
   const { login, user, token } = useAuth();
@@ -23,14 +24,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      const data = await api.post('/api/auth/login', { email, password }, { auth: false });
       login(data.token, data.user);
       if (data.user?.role === 'ADMIN') navigate('/admin/dashboard', { replace: true });
       else if (data.user?.role === 'OWNER') navigate('/owner', { replace: true });

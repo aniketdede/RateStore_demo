@@ -1,23 +1,36 @@
 services:
+  # Backend API (Express + Prisma). Lives in ./server.
   - type: web
     name: ratestore-api
     runtime: node
-    buildCommand: "npm install"
-    startCommand: "npm run dev"
+    rootDir: server
+    plan: free
+    buildCommand: "npm install && npx prisma generate && npx prisma migrate deploy"
+    startCommand: "npm start"
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        sync: false # set to your Neon pooled connection string in the Render dashboard
       - key: JWT_SECRET
-        sync: false
+        generateValue: true
       - key: CLIENT_URL
-        value: https://ratestore-demo.vercel.app
-    plan: free
-  - type: static
+        sync: false # set to your deployed frontend URL (e.g. https://ratestore-demo.vercel.app)
+
+  # Frontend static site (React/Vite). Lives in ./client and publishes ./client/dist.
+  - type: web
     name: ratestore-client
+    runtime: static
+    rootDir: client
+    plan: free
     buildCommand: "npm install && npm run build"
     staticPublishPath: ./dist
+    # SPA fallback so client-side routes (/login, /owner, /admin/...) work on refresh.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://ratestore-api.onrender.com
+        sync: false # set to the deployed API URL, e.g. https://ratestore-api.onrender.com

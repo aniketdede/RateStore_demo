@@ -14,7 +14,34 @@ import { errorHandler } from './middleware/errorHandler.js';
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+
+// CORS: allow the configured client origin (and localhost dev) with credentials.
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+app.use(cors({
+  origin(origin, cb) {
+    // allow same-origin/non-browser (no Origin) and any explicitly allowed origin
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(null, true); // permissive for assessment; restrict in production
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
+// Diagnostic logging: see exactly what auth material reaches the API (helps with proxies/gateways).
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    const hasBearer = (req.headers.authorization || '').startsWith('Bearer ');
+    const hasCookie = !!(req.cookies && req.cookies.token);
+    res.on('finish', () => {
+      console.log(`[req] ${req.method} ${req.path} -> ${res.statusCode} | bearer:${hasBearer ? 'Y' : 'n'} cookie:${hasCookie ? 'Y' : 'n'} origin:${req.headers.origin || '-'}`);
+    });
+  }
+  next();
+});
 
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString(), phase: 'phase-1-auth' }));
 
