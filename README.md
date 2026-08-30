@@ -138,8 +138,4 @@ cd ../client && npm install && npm run dev   # http://localhost:5173
 
 ## VISION.md (interview answer — not in scope)
 
-Government-compliance registration, QR-code feedback, coupon loop, real vs fake reviews, data-access fees. Documented separately — shows separation of "what was asked" from "what I'd do next."
-
----
-
-*RateStore Repository: https://github.com/aniketdede/RateStore_demo*
+Government-compliance registration, QR-code feedback, coupon loop, real vs fake reviews, data-access fees. Documented separately in Vision.md
