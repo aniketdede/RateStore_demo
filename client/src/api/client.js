@@ -55,7 +55,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
       // Standard channel: Authorization: Bearer.
       headers.Authorization = `Bearer ${token}`;
       // Fallback for proxies/preview gateways that strip the Authorization header.
-      headers['X-Access-Token'] = token;
+      // headers['X-Access-Token'] = token;
       const sep = path.includes('?') ? '&' : '?';
       url += `${sep}access_token=${encodeURIComponent(token)}`;
     }
